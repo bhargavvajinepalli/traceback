@@ -1,0 +1,93 @@
+import type { User, LostItem, FoundItem } from './types';
+
+export const users: User[] = [
+  {
+    uid: 'user-1',
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+  },
+];
+
+export const lostItems: LostItem[] = [
+  {
+    id: 'lost-1',
+    userId: 'user-1',
+    itemName: 'iPhone 13 Pro',
+    category: 'Phone',
+    description: 'Black iPhone 13 Pro with a small crack on the top left corner. Has a blue case.',
+    identifier: 'IMEI: 353929110654321',
+    dateLost: '2024-07-15T00:00:00.000Z',
+    location: 'Central Park, New York',
+    imageUrl: 'https://picsum.photos/seed/2/200/200',
+    status: 'Matched',
+  },
+  {
+    id: 'lost-2',
+    userId: 'user-1',
+    itemName: 'MacBook Pro 14"',
+    category: 'Laptop',
+    description: 'Space Gray MacBook Pro with a sticker of a planet on the lid.',
+    identifier: 'Serial: C02G81J2MD6M',
+    dateLost: '2024-07-10T00:00:00.000Z',
+    location: 'Starbucks on 5th Ave',
+    imageUrl: 'https://picsum.photos/seed/5/200/200',
+    status: 'Under Review',
+  },
+  {
+    id: 'lost-3',
+    userId: 'user-1',
+    itemName: 'Car Keys',
+    category: 'Other',
+    description: 'Toyota keys with a red keychain attached.',
+    identifier: '',
+    dateLost: '2024-07-20T00:00:00.000Z',
+    location: 'Grand Central Station',
+    imageUrl: 'https://picsum.photos/seed/4/200/200',
+    status: 'Reported',
+  },
+  {
+    id: 'lost-4',
+    userId: 'user-1',
+    itemName: 'Brown Leather Wallet',
+    category: 'Wallet',
+    description: 'Wallet containing various cards and a small amount of cash.',
+    identifier: 'ID: D1234567',
+    dateLost: '2024-06-25T00:00:00.000Z',
+    location: 'JFK Airport, Terminal 4',
+    imageUrl: 'https://picsum.photos/seed/3/200/200',
+    status: 'Recovered',
+  },
+];
+
+export const foundItems: FoundItem[] = [
+    {
+        id: 'found-1',
+        finderId: 'user-2',
+        category: 'Phone',
+        description: 'Found a black iPhone, seems to be a Pro model. Left it with the park authorities.',
+        dateFound: '2024-07-16T00:00:00.000Z',
+        location: 'Central Park, near the fountain',
+        imageUrl: 'https://picsum.photos/seed/2/200/200',
+        status: 'Available',
+    },
+    {
+        id: 'found-2',
+        finderId: null,
+        category: 'Bag',
+        description: 'Black backpack, feels heavy. Dropped it off at the local police precinct.',
+        dateFound: '2024-07-18T00:00:00.000Z',
+        location: 'Times Square Subway Station',
+        imageUrl: 'https://picsum.photos/seed/6/200/200',
+        status: 'Available',
+    },
+    {
+        id: 'found-3',
+        finderId: 'user-3',
+        category: 'Wallet',
+        description: 'A brown wallet was found and is now at the airport lost and found department.',
+        dateFound: '2024-06-26T00:00:00.000Z',
+        location: 'JFK Airport, Terminal 4',
+        imageUrl: 'https://picsum.photos/seed/3/200/200',
+        status: 'Claimed',
+    }
+];

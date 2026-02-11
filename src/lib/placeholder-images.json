@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-main",
+      "description": "Abstract image representing connection and finding things",
+      "imageUrl": "https://images.unsplash.com/photo-1644088379091-d574269d422f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMG5ldHdvcmt8ZW58MHx8fHwxNzcwNzY4NDg4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract network"
+    },
+    {
+      "id": "phone-1",
+      "description": "A lost smartphone on a wooden bench",
+      "imageUrl": "https://images.unsplash.com/photo-1524929630545-f416a20c047a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsb3N0JTIwcGhvbmV8ZW58MHx8fHwxNzcwODM2NDY0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "lost phone"
+    },
+    {
+      "id": "wallet-1",
+      "description": "A brown leather wallet",
+      "imageUrl": "https://images.unsplash.com/photo-1627123424574-724758594e93?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxsZWF0aGVyJTIwd2FsbGV0fGVufDB8fHx8MTc3MDc5NDgxNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "leather wallet"
+    },
+    {
+      "id": "keys-1",
+      "description": "A set of keys on the ground",
+      "imageUrl": "https://images.unsplash.com/photo-1508682359866-c8ea077eb90b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxsb3N0JTIwa2V5c3xlbnwwfHx8fDE3NzA4MzY0NjR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "lost keys"
+    },
+    {
+      "id": "laptop-1",
+      "description": "A silver laptop left on a cafe table",
+      "imageUrl": "https://images.unsplash.com/photo-1605362814200-8efc2d015560?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxsYXB0b3AlMjBjYWZlfGVufDB8fHx8MTc3MDgyOTY3OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "laptop cafe"
+    },
+    {
+      "id": "bag-1",
+      "description": "A black backpack",
+      "imageUrl": "https://images.unsplash.com/photo-1769134444717-c95e5cc9736c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YmxhY2slMjBiYWNrcGFja3xlbnwwfHx8fDE3NzA4MzY0NjR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "black backpack"
+    }
+  ]
 }
