@@ -1,12 +1,4 @@
-import type { User, LostItem, FoundItem } from './types';
-
-export const users: User[] = [
-  {
-    uid: 'user-1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-  },
-];
+import type { LostItem, FoundItem } from './types';
 
 export const lostItems: LostItem[] = [
   {

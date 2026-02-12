@@ -1,10 +1,10 @@
+'use client';
 import Image from "next/image"
-import { File, ListFilter, MoreHorizontal, Search } from "lucide-react"
+import { File, ListFilter, MoreHorizontal } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -19,10 +19,20 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
-import { lostItems, foundItems } from "@/lib/data"
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase"
+import type { LostItem, FoundItem } from "@/lib/types"
 import { format } from "date-fns"
+import { collection } from "firebase/firestore"
 
 export default function AdminDashboardPage() {
+  const firestore = useFirestore();
+
+  const lostItemsQuery = useMemoFirebase(() => collection(firestore, 'lost_items'), [firestore]);
+  const { data: lostItems, isLoading: isLoadingLost } = useCollection<LostItem>(lostItemsQuery);
+
+  const foundItemsQuery = useMemoFirebase(() => collection(firestore, 'found_items'), [firestore]);
+  const { data: foundItems, isLoading: isLoadingFound } = useCollection<FoundItem>(foundItemsQuery);
+
   return (
     <>
       <div className="flex items-center">
@@ -93,7 +103,8 @@ export default function AdminDashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {lostItems.map((item) => (
+                  {isLoadingLost && <TableRow><TableCell colSpan={6}>Loading...</TableCell></TableRow>}
+                  {lostItems?.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="hidden sm:table-cell">
                         <Image
@@ -143,7 +154,7 @@ export default function AdminDashboardPage() {
             </CardContent>
             <CardFooter>
               <div className="text-xs text-muted-foreground">
-                Showing <strong>1-10</strong> of <strong>{lostItems.length}</strong>{" "}
+                Showing <strong>1-{lostItems?.length || 0}</strong> of <strong>{lostItems?.length || 0}</strong>{" "}
                 products
               </div>
             </CardFooter>
@@ -178,7 +189,8 @@ export default function AdminDashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {foundItems.map((item) => (
+                   {isLoadingFound && <TableRow><TableCell colSpan={6}>Loading...</TableCell></TableRow>}
+                  {foundItems?.map((item) => (
                      <TableRow key={item.id}>
                       <TableCell className="hidden sm:table-cell">
                         <Image
@@ -228,7 +240,7 @@ export default function AdminDashboardPage() {
             </CardContent>
              <CardFooter>
               <div className="text-xs text-muted-foreground">
-                Showing <strong>1-10</strong> of <strong>{foundItems.length}</strong>{" "}
+                Showing <strong>1-{foundItems?.length || 0}</strong> of <strong>{foundItems?.length || 0}</strong>{" "}
                 products
               </div>
             </CardFooter>

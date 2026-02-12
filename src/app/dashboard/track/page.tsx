@@ -1,3 +1,5 @@
+'use client';
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,15 +17,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { lostItems, users } from "@/lib/data"
+import { useUser, useCollection, useFirestore, useMemoFirebase } from "@/firebase"
+import type { LostItem } from "@/lib/types";
 import { format } from "date-fns"
+import { collection, query, where } from "firebase/firestore";
 import Image from "next/image"
 
 export default function TrackItemsPage() {
-    const user = users[0];
-    const userLostItems = lostItems.filter(item => item.userId === user.uid);
+    const { user, isUserLoading: isUserLoadingAuth } = useUser();
+    const firestore = useFirestore();
 
-    const getStatusVariant = (status: (typeof userLostItems)[0]['status']) => {
+    const userLostItemsQuery = useMemoFirebase(() => {
+        if (!user) return null;
+        return query(collection(firestore, 'lost_items'), where('userId', '==', user.uid));
+    }, [firestore, user]);
+
+    const { data: userLostItems, isLoading: isLoadingItems } = useCollection<LostItem>(userLostItemsQuery);
+
+    const getStatusVariant = (status: LostItem['status']) => {
         switch (status) {
             case 'Matched':
                 return 'default'
@@ -38,7 +49,7 @@ export default function TrackItemsPage() {
         }
     }
 
-    const getStatusColor = (status: (typeof userLostItems)[0]['status']) => {
+    const getStatusColor = (status: LostItem['status']) => {
         switch (status) {
             case 'Matched':
                 return 'bg-accent text-accent-foreground'
@@ -79,7 +90,8 @@ export default function TrackItemsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {userLostItems.map((item) => (
+            {(isUserLoadingAuth || isLoadingItems) && <TableRow><TableCell colSpan={5}>Loading...</TableCell></TableRow>}
+            {userLostItems?.map((item) => (
                 <TableRow key={item.id}>
                     <TableCell className="hidden sm:table-cell">
                         <Image

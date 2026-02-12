@@ -1,9 +1,3 @@
-export type User = {
-  uid: string;
-  name: string;
-  email: string;
-};
-
 export type ItemCategory = 'Phone' | 'Wallet' | 'ID' | 'Laptop' | 'Vehicle' | 'Bag' | 'Other';
 
 export const itemCategories: ItemCategory[] = ['Phone', 'Wallet', 'ID', 'Laptop', 'Vehicle', 'Bag', 'Other'];

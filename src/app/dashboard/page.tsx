@@ -1,3 +1,4 @@
+'use client';
 import Link from "next/link"
 import {
   Activity,
@@ -7,11 +8,6 @@ import {
   Users,
 } from "lucide-react"
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,20 +25,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { lostItems, users } from "@/lib/data"
+import { useUser, useCollection, useFirestore, useMemoFirebase } from "@/firebase"
 import { format } from 'date-fns';
+import { collection, query, where } from "firebase/firestore";
+import type { LostItem } from "@/lib/types";
 
 export default function DashboardPage() {
-    const user = users[0];
-    const userLostItems = lostItems.filter(item => item.userId === user.uid);
-    const matchedCount = userLostItems.filter(item => item.status === 'Matched').length;
-    const recoveredCount = userLostItems.filter(item => item.status === 'Recovered').length;
-    const recentReports = userLostItems.slice(0, 5);
+    const { user, isUserLoading: isUserLoadingAuth } = useUser();
+    const firestore = useFirestore();
+
+    const userLostItemsQuery = useMemoFirebase(() => {
+        if (!user) return null;
+        return query(collection(firestore, 'lost_items'), where('userId', '==', user.uid));
+    }, [firestore, user]);
+
+    const { data: userLostItems, isLoading: isLoadingItems } = useCollection<LostItem>(userLostItemsQuery);
+
+    const matchedCount = userLostItems?.filter(item => item.status === 'Matched').length || 0;
+    const recoveredCount = userLostItems?.filter(item => item.status === 'Recovered').length || 0;
+    const recentReports = userLostItems?.slice(0, 5) || [];
+
+    if (isUserLoadingAuth || isLoadingItems) {
+        return <div>Loading...</div>
+    }
 
   return (
         <>
           <div className="flex items-center">
-            <h1 className="text-lg font-semibold md:text-2xl font-headline">Welcome back, {user.name}!</h1>
+            <h1 className="text-lg font-semibold md:text-2xl font-headline">Welcome back, {user?.displayName || 'User'}!</h1>
           </div>
           <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
             <Card>
@@ -53,7 +63,7 @@ export default function DashboardPage() {
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{userLostItems.length}</div>
+                <div className="text-2xl font-bold">{userLostItems?.length || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   Keep reporting to increase chances.
                 </p>
@@ -91,7 +101,7 @@ export default function DashboardPage() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{userLostItems.length > 0 ? Math.round((recoveredCount / userLostItems.length) * 100) : 0}%</div>
+                <div className="text-2xl font-bold">{(userLostItems?.length || 0) > 0 ? Math.round((recoveredCount / (userLostItems?.length || 1)) * 100) : 0}%</div>
                 <p className="text-xs text-muted-foreground">
                   Your success rate.
                 </p>
