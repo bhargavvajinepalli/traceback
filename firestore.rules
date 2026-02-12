@@ -1,0 +1,174 @@
+/**
+ * @fileoverview Firestore Security Rules for the Lost & Found Application
+ *
+ * @version 1.0
+ * @author Firebase Rules Architect
+ *
+ * @description
+ * This ruleset implements a robust security model based on user ownership and role-based
+ * access control (RBAC) for 'admin' and 'police' users. The core philosophy is
+ * "Authorization Independence," ensuring that security decisions are fast, efficient,
+ * and do not rely on slow cross-document reads (`get()`).
+ *
+ * Core Philosophy:
+ * - User Ownership: Users have full control over their own profile and the items they report.
+ * - Role-Based Access (Admin/Police): Users with special roles have elevated read and
+ *   update privileges over item reports to facilitate the matching and recovery process.
+ * - Default Deny: Access is denied by default and only explicitly granted.
+ * - No User Enumeration: Listing users from the `user_profiles` collection is forbidden.
+ *
+ * Data Structure & Denormalization:
+ * - /user_profiles/{userId}: Private user data, keyed by the user's Auth UID.
+ * - /lost_items/{itemId}, /found_items/{itemId}: Top-level collections for item reports.
+ *   Each item document contains a denormalized `userId` field to link it to its owner,
+ *   which is critical for making fast and secure authorization checks on writes.
+ * - /app_roles_{role}/{userId}: Separate, dedicated collections for role management. A user's
+ *   role is determined by the existence of a document in one of these collections, which is
+ *   checked efficiently using `exists()`. This is more secure and performant than checking a
+ *   role field on a user profile.
+ *
+ * Key Security Decisions:
+ * - User profiles can only be created, read, updated, and deleted by the owning user.
+ * - Item reports can be created by any signed-in user, but they can only be modified or
+ *   deleted by the original reporter (the owner) or updated by users with an admin/police role.
+ * - The ability to list all items in the `lost_items` and `found_items` collections is
+ *   restricted to admin and police roles to protect user privacy and support administrative dashboards.
+ * - Role collections (`/app_roles_*`) are not writable by any client to prevent self-escalation
+ *   of privileges. These roles must be managed from a trusted server environment or the
+ *   Firebase Console.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
+
+    /**
+     * Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user is the owner of a resource,
+     * identified by the provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if the document being operated on already exists.
+     * Essential for secure update and delete operations.
+     */
+    function isExistingDoc() {
+      return resource != null;
+    }
+
+    /**
+     * Checks if the authenticated user has the 'admin' role by checking for
+     * the existence of a corresponding document in the admin roles collection.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/app_roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * Checks if the authenticated user has the 'police' role by checking for
+     * the existence of a corresponding document in the police roles collection.
+     */
+    function isPolice() {
+      return isSignedIn() && exists(/databases/$(database)/documents/app_roles_police/$(request.auth.uid));
+    }
+
+    /**
+     * Checks if the authenticated user has either the 'admin' or 'police' role.
+     */
+    function hasAdminOrPoliceRole() {
+      return isAdmin() || isPolice();
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Collection Rules
+    // ------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to user profile documents.
+     * @path /user_profiles/{userId}
+     * @allow (create) An authenticated user can create their own profile document.
+     * @deny (list) A user cannot list all other user profiles in the database.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /user_profiles/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && isExistingDoc() && request.resource.data.id == resource.data.id;
+      allow delete: if isOwner(userId) && isExistingDoc();
+    }
+
+    /**
+     * @description Manages admin role assignments. Read-only for clients.
+     * @path /app_roles_admin/{userId}
+     * @allow (none) No client is permitted to read or write to this collection.
+     * @deny (create) A user cannot grant themselves admin privileges.
+     * @principle Prevents privilege escalation. Roles must be managed server-side.
+     */
+    match /app_roles_admin/{userId} {
+      allow get: if false;
+      allow list: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Manages police role assignments. Read-only for clients.
+     * @path /app_roles_police/{userId}
+     * @allow (none) No client is permitted to read or write to this collection.
+     * @deny (create) A user cannot grant themselves police privileges.
+     * @principle Prevents privilege escalation. Roles must be managed server-side.
+     */
+    match /app_roles_police/{userId} {
+      allow get: if false;
+      allow list: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to lost item reports.
+     * @path /lost_items/{lostItemId}
+     * @allow (create) A signed-in user can create a new lost item report for themselves.
+     * @deny (delete) A user cannot delete a lost item report that they did not create.
+     * @principle Enforces document ownership for writes, while allowing elevated roles to read and update.
+     */
+    match /lost_items/{lostItemId} {
+      allow get: if isOwner(resource.data.userId) || hasAdminOrPoliceRole();
+      allow list: if hasAdminOrPoliceRole();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingDoc() && (isOwner(resource.data.userId) || hasAdminOrPoliceRole()) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingDoc() && isOwner(resource.data.userId);
+    }
+
+    /**
+     * @description Controls access to found item reports.
+     * @path /found_items/{foundItemId}
+     * @allow (update) An admin user can update the status of any found item report.
+     * @deny (list) A regular user cannot list all found item reports in the database.
+     * @principle Enforces document ownership for writes, while allowing elevated roles to read and update.
+     */
+    match /found_items/{foundItemId} {
+      allow get: if isOwner(resource.data.userId) || hasAdminOrPoliceRole();
+      allow list: if hasAdminOrPoliceRole();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingDoc() && (isOwner(resource.data.userId) || hasAdminOrPoliceRole()) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingDoc() && isOwner(resource.data.userId);
+    }
+  }
+}

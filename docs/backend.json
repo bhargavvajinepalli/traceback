@@ -1,0 +1,245 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Stores additional profile information for users authenticated via an external system, such as Firebase Authentication. This entity links application-specific user data with the authentication system's user ID.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity, corresponding to the external authentication system's user ID (e.g., Firebase Auth UID)."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's display name or full name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role assigned to the user within the application, such as 'user', 'admin', or 'police'."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "role"
+      ]
+    },
+    "LostItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LostItem",
+      "type": "object",
+      "description": "Represents an item that a user has reported as lost, including all relevant details for identification and recovery.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LostItem entity, serving as the Complaint Reference ID."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who reported this lost item. (Relationship: UserProfile 1:N LostItem)"
+        },
+        "itemName": {
+          "type": "string",
+          "description": "The common name of the lost item."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category the lost item belongs to (e.g., 'Phone', 'Wallet', 'ID', 'Laptop', 'Vehicle', 'Bag', 'Other')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the lost item, including distinctive features, color, brand, etc."
+        },
+        "uniqueIdentifier": {
+          "type": "string",
+          "description": "A unique identifier for the item, such as an IMEI number for phones or a serial number for other electronics. Can be empty if not applicable."
+        },
+        "dateLost": {
+          "type": "string",
+          "description": "The date when the item was reported lost.",
+          "format": "date"
+        },
+        "locationLost": {
+          "type": "string",
+          "description": "A descriptive string for the location where the item was lost, potentially including geo-coordinates or an address."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "The URL to an image of the lost item, stored in an external storage service (e.g., Firebase Storage).",
+          "format": "uri"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the lost item report (e.g., 'Reported', 'Under Review', 'Matched', 'Recovered')."
+        },
+        "reportedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the lost item report was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "itemName",
+        "category",
+        "description",
+        "dateLost",
+        "locationLost",
+        "imageUrl",
+        "status",
+        "reportedAt"
+      ]
+    },
+    "FoundItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FoundItem",
+      "type": "object",
+      "description": "Represents an item that a user has found and reported, awaiting potential matching with a lost item.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FoundItem entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who reported this found item. (Relationship: UserProfile 1:N FoundItem)"
+        },
+        "category": {
+          "type": "string",
+          "description": "The category the found item belongs to (e.g., 'Phone', 'Wallet', 'ID', 'Laptop', 'Vehicle', 'Bag', 'Other')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the found item, including distinctive features, color, brand, etc."
+        },
+        "locationFound": {
+          "type": "string",
+          "description": "A descriptive string for the location where the item was found, potentially including geo-coordinates or an address."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "The URL to an image of the found item, stored in an external storage service (e.g., Firebase Storage).",
+          "format": "uri"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the found item report (e.g., 'Reported', 'Under Review', 'Matched', 'Claimed')."
+        },
+        "reportedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the found item report was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "category",
+        "description",
+        "locationFound",
+        "imageUrl",
+        "status",
+        "reportedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/user_profiles/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information, where the document ID matches the user's authentication UID. Access is restricted to the owner (request.auth.uid) for read/write. Includes denormalized 'role' for application-specific authorization, though global roles are separately managed.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching Firebase Authentication's UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/app_roles_admin/{userId}",
+        "definition": {
+          "entityName": "Role",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "A collection used for database-backed access control. Document existence in this collection grants 'admin' privileges to the corresponding userId. This enables efficient and independent role checks in security rules via 'exists()'.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user designated as an administrator."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/app_roles_police/{userId}",
+        "definition": {
+          "entityName": "Role",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "A collection used for database-backed access control. Document existence in this collection grants 'police' privileges to the corresponding userId. This enables efficient and independent role checks in security rules via 'exists()'.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user designated as police personnel."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/lost_items/{lostItemId}",
+        "definition": {
+          "entityName": "LostItem",
+          "schema": {
+            "$ref": "#/backend/entities/LostItem"
+          },
+          "description": "Stores details of items reported as lost. Each document contains a 'userId' field, denormalizing ownership for authorization independence. Owners can read/write their own items. Admin/Police can read all items and update their status to facilitate matching and recovery. Supports efficient global queries for the matching system and admin dashboard.",
+          "params": [
+            {
+              "name": "lostItemId",
+              "description": "The unique identifier for a lost item report, serving as the Complaint Reference ID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/found_items/{foundItemId}",
+        "definition": {
+          "entityName": "FoundItem",
+          "schema": {
+            "$ref": "#/backend/entities/FoundItem"
+          },
+          "description": "Stores details of items reported as found. Each document contains a 'userId' field, denormalizing ownership for authorization independence. Owners can read/write their own items. Admin/Police can read all items and update their status. Supports efficient global queries for the matching system and admin dashboard.",
+          "params": [
+            {
+              "name": "foundItemId",
+              "description": "The unique identifier for a found item report."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure prioritizes Authorization Independence, Structural Segregation, and consistent Access Modeling to ensure security, scalability, and debuggability.\n\n**Authorization Independence:**\n\n1.  **User Profiles (`/user_profiles/{userId}`):** Each user's profile is stored under a document whose ID is their `request.auth.uid`. This directly ties the document to the authenticated user, making authorization checks (`request.auth.uid == userId`) atomic and independent of any other document lookups (`get()`).\n2.  **Lost and Found Items (`/lost_items/{lostItemId}`, `/found_items/{foundItemId}`):** Crucially, each `LostItem` and `FoundItem` document includes a `userId` field (e.g., `resource.data.userId`). This denormalizes the ownership information directly into the item document. Therefore, authorization rules for modifying these items can check `request.auth.uid == resource.data.userId` without needing to perform a `get()` call to a parent user document. This enables atomic write operations (e.g., a user reporting an item) and prevents security rule complexity from breaking batch writes or transactions.\n3.  **Global Roles (`/app_roles_admin/{userId}`, `/app_roles_police/{userId}`):** For administrative and police roles, a \"existence over content\" approach is used. Dedicated top-level collections store empty or minimal documents where the document ID is the `userId` of an admin or police officer. Security rules can then use an efficient `exists(/databases/$(database)/documents/app_roles_admin/$(request.auth.uid))` check, which is atomic and independent, avoiding `get()` calls to the user profile document to check a `role` field. This robustly separates role management from general user profile data.\n\n**QAPs (Query-Based Access Patterns / Secure List Operations):**\n\n1.  **Top-level Collections for Items:** By placing `LostItem` and `FoundItem` in top-level collections (`/lost_items`, `/found_items`), the system facilitates the required "
+  }
+}
