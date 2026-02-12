@@ -150,7 +150,7 @@ service cloud.firestore {
      */
     match /lost_items/{lostItemId} {
       allow get: if isOwner(resource.data.userId) || hasAdminOrPoliceRole();
-      allow list: if hasAdminOrPoliceRole();
+      allow list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if isExistingDoc() && (isOwner(resource.data.userId) || hasAdminOrPoliceRole()) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingDoc() && isOwner(resource.data.userId);
@@ -165,7 +165,7 @@ service cloud.firestore {
      */
     match /found_items/{foundItemId} {
       allow get: if isOwner(resource.data.userId) || hasAdminOrPoliceRole();
-      allow list: if hasAdminOrPoliceRole();
+      allow list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if isExistingDoc() && (isOwner(resource.data.userId) || hasAdminOrPoliceRole()) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingDoc() && isOwner(resource.data.userId);
